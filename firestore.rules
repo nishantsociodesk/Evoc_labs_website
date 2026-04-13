@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Public job postings can be stored here (optional).
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Applications are write-only from the client.
+    // Uses anonymous auth so every submit has an authenticated context.
+    match /applications/{appId} {
+      allow read, list: if false;
+
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly([
+          'roleId',
+          'fullName',
+          'email',
+          'githubUrl',
+          'portfolioUrl',
+          'resumeUrl',
+          'projectLinks',
+          'message',
+          'createdAt',
+          'source'
+        ])
+        && request.resource.data.roleId is string
+        && request.resource.data.fullName is string
+        && request.resource.data.email is string
+        && request.resource.data.source is string;
+
+      allow update, delete: if false;
+    }
+  }
+}
+
